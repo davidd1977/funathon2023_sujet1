@@ -321,8 +321,9 @@ surfaces_ra1852_coordonnees_centre <- ZZZ_1852_aux3 %>%
   )) %>%
   ungroup()
 
+Temporaire <- surfaces_ra1852_coordonnees_centre %>% filter(centre == "NULL")
 
-
+surfaces_ra1852_coordonnees_centre$centre[surfaces_ra1852_coordonnees_centre$centre == "NULL"] <- NA
 
 
 
