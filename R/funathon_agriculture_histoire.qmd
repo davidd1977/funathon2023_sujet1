@@ -68,6 +68,9 @@ library(tmaptools)
 library(mapsf)
 library(geojsonsf)
 
+#install.packages("ggthemes")
+#install.packages("mapsf")
+
 ```
 
 ## 1 - Découverte du jeu de données
@@ -90,6 +93,13 @@ head(surfaces_ra1852)
 
 **Les surfaces sont exprimées en hectares.**
 
+### News David
+
+
+
+
+
+
 Nous vous proposons de regarder le jeu de données des surfaces_ra1852.   
 Vous constatez que : 
 
@@ -103,7 +113,7 @@ Pour s'amuser avec les données, afficher le tableau des surfaces de votre canto
 #| warning: false
 
 mon_canton <- surfaces_ra1852 %>% 
-  filter(canton == "TOULOUSE") %>% ### Changer ici avec votre canton
+  filter(canton == "LILLE") %>% ### Changer ici avec votre canton
   pivot_longer(-c(code, canton, departement)) %>% 
   select(-c(code, canton, departement)) %>% 
   print()
@@ -115,6 +125,27 @@ Avez-vous un peu de vigne ?
 Vous vérifierez que :     
 - cereales + racines_et_legumes_divers + cultures_diverses + prairies_artificielles + jacheres = total_des_terres_labourables      
 - total_des_terres_labourables +  prairies_naturelles + vignes + autres_cultures_arborescentes + paturages + autres_surfaces_ecoumene = superficie_totale     
+
+### News David
+```{r}
+Controle_superf <- mon_canton %>%
+  filter(name %in% c("cereales","racines_et_legumes_divers",
+                     "cultures_diverses","prairies_artificielles","jacheres")) %>% 
+  summarise(value = sum(value))
+
+Controle_superf_aux <- mon_canton %>%
+  filter(name %in% c("total_des_terres_labourables","prairies_naturelles",
+                     "vignes","autres_cultures_arborescentes","paturages",
+                     "autres_surfaces_ecoumene")) %>% 
+  summarise(value = sum(value))
+
+mon_canton_aux <- mon_canton %>% 
+  pivot_wider() %>% 
+  mutate(SOMME_TL = sum(cereales+racines_et_legumes_divers+
+                     cultures_diverses+prairies_artificielles+jacheres,na.rm = T),
+         EC = total_des_terres_labourables - SOMME_TL)
+
+```
 
 
 ## 2 - Trouver les coordonnées géographiques des chefs-lieux de canton (utilisation d'une API)
