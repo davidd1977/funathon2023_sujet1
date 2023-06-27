@@ -144,6 +144,7 @@ mon_canton_aux <- mon_canton %>%
   mutate(SOMME_TL = sum(cereales+racines_et_legumes_divers+
                      cultures_diverses+prairies_artificielles+jacheres,na.rm = T),
          EC = total_des_terres_labourables - SOMME_TL)
+### David
 
 ```
 
