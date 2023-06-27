@@ -149,6 +149,7 @@ mon_canton_aux <- mon_canton %>%
 ```
 
 
+
 ## 2 - Trouver les coordonnées géographiques des chefs-lieux de canton (utilisation d'une API)
 
 Pour construire les cartes, nous avons besoin de placer les chefs-lieux de canton sur la carte. Pour cela nous allons :   
