@@ -1,5 +1,3 @@
-David
-
 ---
 title: "Agriculture, 170 ans d'histoire"
 subtitle: "Produire un fond cartographique à l'aide de données historiques"
@@ -93,13 +91,6 @@ head(surfaces_ra1852)
 
 **Les surfaces sont exprimées en hectares.**
 
-### News David
-
-
-
-
-
-
 Nous vous proposons de regarder le jeu de données des surfaces_ra1852.   
 Vous constatez que : 
 
@@ -126,7 +117,6 @@ Vous vérifierez que :
 - cereales + racines_et_legumes_divers + cultures_diverses + prairies_artificielles + jacheres = total_des_terres_labourables      
 - total_des_terres_labourables +  prairies_naturelles + vignes + autres_cultures_arborescentes + paturages + autres_surfaces_ecoumene = superficie_totale     
 
-### News David
 ```{r}
 Controle_superf <- mon_canton %>%
   filter(name %in% c("cereales","racines_et_legumes_divers",
@@ -146,8 +136,6 @@ mon_canton_aux <- mon_canton %>%
          EC = total_des_terres_labourables - SOMME_TL)
 
 ```
-
-
 
 ## 2 - Trouver les coordonnées géographiques des chefs-lieux de canton (utilisation d'une API)
 
@@ -176,13 +164,6 @@ Vous pouvez copier la ligne de commande générée car nous en aurons besoin plu
 ```
 curl 'https://geo.api.gouv.fr/communes?nom=Toulouse&fields=departement&boost=population&limit=5' 
 ```
-
-### News David
-curl 'https://geo.api.gouv.fr/communes?nom=Lille'
-curl 'https://geo.api.gouv.fr/communes?nom=Lille&codeDepartement=59'
-curl 'https://geo.api.gouv.fr/communes?nom=Lille&codeDepartement=59&fields=centre&boost=population&limit=1'
-curl 'https://geo.api.gouv.fr/communes?nom=Toulouse&codeDepartement=31&fields=centre&boost=population&limit=1'
-### Attention : le terminal inverse les coordonnées géographiques
 
 #### Tester l'API dans un Terminal
 
@@ -275,6 +256,10 @@ Votre travail consiste à rajouter 2 colonnes, le nom et les coordonnées du cen
 #| warning: false
 #| echo: true
 
+####################################### A COMPLETER
+
+### Attention : le terminal inverse les coordonnées géographiques par rapport à GoogleEarth
+
 ZZZ_1852_aux1 <- surfaces_ra1852 %>% 
   filter(is.na(departement) == T) %>% 
   mutate(code_new1 = code/10,
@@ -325,29 +310,9 @@ Temporaire <- surfaces_ra1852_coordonnees_centre %>% filter(centre == "NULL")
 
 surfaces_ra1852_coordonnees_centre$centre[surfaces_ra1852_coordonnees_centre$centre == "NULL"] <- NA
 
-
-
-### Création de l'URL
-#Sachant que l'on va devoir ensuite faire la requête pour tous les chefs-lieu de canton, on propose une requête type avec 2 champs à completer. Les champs à compléter sont %s
-url = "https://geo.api.gouv.fr/communes?nom=%s&fields=centre&boost=population&limit=1"
-
-# On utilise la fonction sprintf qui prend une chaine de caractères 'url' et qui va remplacer les %s par les paramètres passées ensuite dans l'ordre. Le premier %s est remplacé par "Toulouse), le second par "31"
-url_completed <- sprintf(url,list(ZZZ_1852_aux5$canton_aux))
-
-# on interroge l'API qui est renvoit un JSON qui est convertie en dataframe grâce à la fonction fromJSON
-resultat <-  fromJSON(url_completed)
-print(resultat)
-print(resultat$centre)
-
-##################################################################################################################### 
-##################################################################################################################### 
-####################################### A COMPLETER    #####################################################
-##################################################################################################################### 
-#####################################################################################################################
+####################################### A COMPLETER
 
 ```
-
-
 
 #### Vérifier les coordonnées des chefs lieux des cantons
 
@@ -361,16 +326,49 @@ Il se peut que des coordonnées de chefs-lieux ne soient pas trouvés. Identifie
 #| warning: false
 #| echo: true
 
+####################################### A COMPLETER
 
-##################################################################################################################### 
-##################################################################################################################### 
-####################################### A COMPLETER    #####################################################
-##################################################################################################################### 
-#####################################################################################################################
+liste_coordonnees_non_trouvees <- surfaces_ra1852_coordonnees_centre %>%
+  filter(is.na(centre))
 
+print(liste_coordonnees_non_trouvees %>% select(canton, departement, code_departement, centre))
+
+surfaces_ra1852_coordonnees_centre_corrigees <- surfaces_ra1852_coordonnees_centre %>%
+  mutate( centre =
+    case_when(
+      canton == "LA PALISSE" ~ list(c(3.6040518, 46.2613646)), # Aujourd'hui tout accroché
+      canton == "PONTS L'EVEQUE" ~ list(c(0.1415941, 49.2905376)),
+      canton == "AJACCIO" ~ list(c(8.623262, 41.9228409)), # Problème de département dans la recherche auto pour API
+      canton == "BASTIA" ~ list(c(9.4033732, 42.686163)),
+      canton == "CALVI" ~ list(c(8.7198407, 42.5498653)),
+      canton == "CORTE" ~ list(c(8.9865623, 42.2737575)),
+      canton == "SARTENE" ~ list(c(8.849981, 41.5753114)),
+      canton == "ISSINGEAUX" ~ list(c(4.0420206, 45.1343278)), # Avec un Y dans le nom
+      canton == "CHALONS SUR MARNE" ~ list(c(4.302215, 48.9655892)), # Ancien nom de Chalons en champagne
+      canton == "CHATEAU SALINS" ~ list(c(6.4721373, 48.8200817)), # Maintenant en Moselle
+      canton == "SARREBOURG" ~ list(c(7.0063386, 48.7329756)), # Idem
+      canton == "NAPOLEONVILLE" ~ list(c(-3.0109328, 48.0663472)), # Maintenant Pontivy
+      canton == "BRIEY" ~ list(c(5.9352709, 49.2584507)), # Maintenant en Meurthe-et-moselle
+      canton == "SCHLESTADT" ~ list(c(7.4174806, 48.2507288)),   # Maintenant Sélestat
+      canton == "BELFORT" ~ list(c(6.8203836, 47.6458405)), # Maintenant dans le Territoire de Belfort
+      canton == "SAINT DENIS" ~ list(c(2.3244174, 48.9268478)), # Nouveaux départements pour les villes d Île de France
+      canton == "SCEAUX" ~ list(c(2.285955, 48.7760123)),
+      canton == "CORBEIL" ~ list(c(2.4232699, 48.5973693)),
+      canton == "ETAMPES" ~ list(c(2.1111519, 48.4227852)),
+      canton == "PONTOISE" ~ list(c(2.0790004, 49.0488144)),
+      canton == "CASTEL SARRASIN" ~ list(c(0.965407, 44.0536266)), # Aujourd'hui tout accroché
+      canton == "GRASSE" ~ list(c(6.7666744, 43.6713791)),
+      canton == "NAPOLEON VENDEE" ~ list(c(-1.5719159, 46.6659612)), # Maintenant La roche-sur-Yon
+      canton == "REMIRMONT" ~ list(c(6.5603419, 48.0037694)), # Maintenant Remiremont
+      TRUE ~ centre
+    )
+
+
+  )
+
+####################################### A COMPLETER
 
 ```
-
 
 #### Créer les colonnes latitude et longitude à partir de la colonne centre
 
@@ -381,12 +379,17 @@ Il ne vous reste plus qu'à séparer la colonne centre pour avoir la latitude et
 #| warning: false
 #| echo: true
 
+####################################### A COMPLETER
 
-##################################################################################################################### 
-##################################################################################################################### 
-####################################### A COMPLETER    #####################################################
-##################################################################################################################### 
-#####################################################################################################################
+Table_lat_long <- surfaces_ra1852_coordonnees_centre_corrigees %>% 
+  mutate(latitude=str_split_fixed(centre,",",2)[,1],
+         longitude=str_split_fixed(centre,",",2)[,2])
+
+Table_lat_long <- Table_lat_long %>% 
+  mutate(ZZZ1 = substr(latitude,3,nchar(latitude))) %>% 
+  mutate(ZZZ2 = substr(longitude,1,nchar(longitude)-1))
+
+####################################### A COMPLETER
 
 ```
 
