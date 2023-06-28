@@ -382,12 +382,12 @@ Il ne vous reste plus qu'à séparer la colonne centre pour avoir la latitude et
 ####################################### A COMPLETER
 
 Table_lat_long <- surfaces_ra1852_coordonnees_centre_corrigees %>% 
-  mutate(latitude=str_split_fixed(centre,",",2)[,1],
-         longitude=str_split_fixed(centre,",",2)[,2])
+  mutate(longitude_aux=str_split_fixed(centre,",",2)[,1],
+         latitude_aux=str_split_fixed(centre,",",2)[,2])
 
 Table_lat_long <- Table_lat_long %>% 
-  mutate(ZZZ1 = substr(latitude,3,nchar(latitude))) %>% 
-  mutate(ZZZ2 = substr(longitude,1,nchar(longitude)-1))
+  mutate(longitude = as.numeric(substr(longitude_aux,3,nchar(longitude_aux)))) %>% 
+  mutate(latitude = as.numeric(substr(latitude_aux,1,nchar(latitude_aux)-1)))
 
 ####################################### A COMPLETER
 
@@ -406,12 +406,17 @@ Si vous ne savez pas comment faire, vous pouvez utiliser leaflet avec des marker
 #| warning: false
 #| echo: true
 
+####################################### A COMPLETER
 
-##################################################################################################################### 
-##################################################################################################################### 
-####################################### A COMPLETER    #####################################################
-##################################################################################################################### 
-#####################################################################################################################
+leaflet(data = Table_lat_long) %>% 
+  addTiles() %>%
+  addMarkers(lng = ~longitude, 
+             lat = ~latitude, 
+             popup = ~canton, 
+             label = ~(paste0("Canton : ",canton," - Surfaces en céréales : ",cereales," ha"))) %>% 
+  setView(lng = 5.69, lat = 45.74, zoom = 12)
+
+####################################### A COMPLETER
 
 ```
 
