@@ -23,8 +23,6 @@ En travaillant sur ce sujet vous apprendrez à :
 - Visualiser des données géographiques
 - Créer un dataviz sur Observable (https://observablehq.com/) ou en local
 
-
-
 ## Déroulement du sujet
 
 1. Découverte du jeu de données
@@ -68,7 +66,6 @@ library(geojsonsf)
 
 #install.packages("ggthemes")
 #install.packages("mapsf")
-
 ```
 
 ## 1 - Découverte du jeu de données
@@ -134,7 +131,6 @@ mon_canton_aux <- mon_canton %>%
   mutate(SOMME_TL = sum(cereales+racines_et_legumes_divers+
                      cultures_diverses+prairies_artificielles+jacheres,na.rm = T),
          EC = total_des_terres_labourables - SOMME_TL)
-
 ```
 
 ## 2 - Trouver les coordonnées géographiques des chefs-lieux de canton (utilisation d'une API)
@@ -256,8 +252,6 @@ Votre travail consiste à rajouter 2 colonnes, le nom et les coordonnées du cen
 #| warning: false
 #| echo: true
 
-####################################### A COMPLETER
-
 ### Attention : le terminal inverse les coordonnées géographiques par rapport à GoogleEarth
 
 ZZZ_1852_aux1 <- surfaces_ra1852 %>% 
@@ -309,9 +303,6 @@ surfaces_ra1852_coordonnees_centre <- ZZZ_1852_aux3 %>%
 Temporaire <- surfaces_ra1852_coordonnees_centre %>% filter(centre == "NULL")
 
 surfaces_ra1852_coordonnees_centre$centre[surfaces_ra1852_coordonnees_centre$centre == "NULL"] <- NA
-
-####################################### A COMPLETER
-
 ```
 
 #### Vérifier les coordonnées des chefs lieux des cantons
@@ -325,8 +316,6 @@ Il se peut que des coordonnées de chefs-lieux ne soient pas trouvés. Identifie
 #| label: correction_coordonnees_jeu_donnees
 #| warning: false
 #| echo: true
-
-####################################### A COMPLETER
 
 liste_coordonnees_non_trouvees <- surfaces_ra1852_coordonnees_centre %>%
   filter(is.na(centre))
@@ -365,9 +354,6 @@ surfaces_ra1852_coordonnees_centre_corrigees <- surfaces_ra1852_coordonnees_cent
 
 
   )
-
-####################################### A COMPLETER
-
 ```
 
 #### Créer les colonnes latitude et longitude à partir de la colonne centre
@@ -379,8 +365,6 @@ Il ne vous reste plus qu'à séparer la colonne centre pour avoir la latitude et
 #| warning: false
 #| echo: true
 
-####################################### A COMPLETER
-
 Table_lat_long <- surfaces_ra1852_coordonnees_centre_corrigees %>% 
   mutate(longitude_aux=str_split_fixed(centre,",",2)[,1],
          latitude_aux=str_split_fixed(centre,",",2)[,2])
@@ -388,9 +372,6 @@ Table_lat_long <- surfaces_ra1852_coordonnees_centre_corrigees %>%
 Table_lat_long <- Table_lat_long %>% 
   mutate(longitude = as.numeric(substr(longitude_aux,3,nchar(longitude_aux)))) %>% 
   mutate(latitude = as.numeric(substr(latitude_aux,1,nchar(latitude_aux)-1)))
-
-####################################### A COMPLETER
-
 ```
 
 #### Vérification de l'emplacement des chefs-lieu de canton
@@ -415,9 +396,6 @@ leaflet(data = Table_lat_long) %>%
              popup = ~canton, 
              label = ~(paste0("Canton : ",canton," - Surfaces en céréales : ",cereales," ha"))) %>% 
   setView(lng = 5.69, lat = 45.74, zoom = 12)
-
-####################################### A COMPLETER
-
 ```
 
 
@@ -453,26 +431,30 @@ Nous vous proposons de jouer avec les Voronoi sur ce site : [Jeu sur les voronoi
 #| warning: false
 #| echo: true
 
+# geo.api.gouv.fr --> Les coordonnées GeoJSON sont exprimées en WGS-84 (EPSG 4326)
 
 # pour travailler sur des aspects géographiques dont les voronoi il faut passer du dataframe au géo dataframe
-# surfaces_ra1852_geo <-
-#   st_as_sf(
-#     surfaces_ra1852_final %>% drop_na(c(longitude, latitude)),
-#     coords = c("longitude", "latitude"),
-#     crs = 4326
-#   )
-# 
+surfaces_ra1852_geo <-
+  st_as_sf(
+    Table_lat_long %>% drop_na(c(longitude, latitude)),
+    coords = c("longitude", "latitude"),
+    crs = 4326
+  )
+
 # # on charge la projection pour le mettre en Lambert-93
-# surfaces_ra1852_geo <- st_transform(surfaces_ra1852_geo, crs = 2154) 
+surfaces_ra1852_geo <- st_transform(surfaces_ra1852_geo, crs = 2154) 
 # 
 # # On utilise les fonctions de sf
-# voronoi_surfaces_ra1852 <- surfaces_ra1852_geo %>%
-#   st_union() %>% ## permet de passer une simple à un seul objet géométrique avec tous les points
-#   st_voronoi() %>% ## calcul du voronoi
-#   st_collection_extract()  ## extraction en une liste avec les 363 figures géométriques
-# 
+voronoi_surfaces_ra1852 <- surfaces_ra1852_geo %>%
+st_union() %>%
+# permet de passer une simple à un seul objet géométrique avec tous les points
+st_voronoi() %>%
+# calcul du voronoi
+st_collection_extract()
+# extraction en une liste avec les 363 figures géométriques
+
 # # Visualisation simple
-# plot(voronoi_surfaces_ra1852)
+plot(voronoi_surfaces_ra1852)
 ```
 
 ### Amélioration du découpage géographique
@@ -487,7 +469,20 @@ Dans le graphique généré dans le précédent chunk, on reconnait la France en
 #| warning: false
 #| echo: true
 
+dep <- sf::read_sf(here('data/dep2021_simplify2.json'), crs=2154) 
+### enlever outre-mer
+dep_metro <- dep %>% 
+  rowwise() %>% 
+  filter(nchar(dep)==2) %>% 
+  ungroup()
 
+### ne garder que les coutours de la France
+dep_union <- st_union(dep_metro)
+plot(dep_union)
+
+### ne garder les voronoi uniquement qui sont en intersection avece les contours de la France
+voronoi_surfaces_ra1852 = st_intersection(voronoi_surfaces_ra1852, dep_union)
+plot(voronoi_surfaces_ra1852)
 ```
 
 
@@ -505,17 +500,26 @@ A vous de jouer.
 #| warning: false
 #| echo: true
 
-##################################################################################################################### 
-##################################################################################################################### 
-####################################### A COMPLETER    #####################################################
-##################################################################################################################### 
-#####################################################################################################################
+# un peu de manipulation pour créer la table : cf l'aide de st_as_sf
+data_voronoi <- data.frame(id = 1:length(voronoi_surfaces_ra1852))
+data_voronoi <- data_voronoi %>% 
+  cbind(voronoi_surfaces_ra1852)
+data_voronoi <- st_as_sf(data_voronoi)
 
+# correction point de calvi qui est hors de la carte si st_join.
+new_calvi <- st_point(c(1180000, 6180000))
+surfaces_ra1852_geo$geometry[surfaces_ra1852_geo$canton == "CALVI"] = new_calvi
+
+# Je créé la jointure entre mes points et mes polygons voronoi
+voronoi_surfaces_final <- data_voronoi %>% 
+  st_join(surfaces_ra1852_geo)
+
+plot(voronoi_surfaces_final)
+
+write_csv2(x = voronoi_surfaces_final, file = here("data/correction_dataframe_intermerdiaire/voronoi_surfaces_final.csv"))
 
 voronoi_surfaces_final <- read.csv2(here("data/correction_dataframe_intermerdiaire/voronoi_surfaces_final.csv"))
-
 ```
-
 
 ###  Cartes en R
 
@@ -546,12 +550,14 @@ Pour apprendre à faire des cartes en R, vous pouvez consulter le site :
 #| warning: false
 #| echo: true
 
-##################################################################################################################### 
-##################################################################################################################### 
-####################################### A COMPLETER    #####################################################
-##################################################################################################################### 
-#####################################################################################################################
-
+carto_terres_labourables_par_canton <- voronoi_surfaces_final %>% 
+  mutate(part_labourable = round(100 * total_des_terres_labourables/superficie_totale, -1)) %>% 
+  ggplot() +
+  geom_sf(aes(fill = part_labourable),color="grey",size=.2)+
+  scale_fill_gradient(name = "Part des terres\nlabourables en % \nde la surface totale", limits = c(0, 100), 
+    low = "white", high = "forestgreen") +
+  theme_map()
+carto_terres_labourables_par_canton
 ```
 
 
@@ -560,13 +566,24 @@ Pour apprendre à faire des cartes en R, vous pouvez consulter le site :
 #| warning: false
 #| echo: true
 
-##################################################################################################################### 
-##################################################################################################################### 
-####################################### A COMPLETER    #####################################################
-##################################################################################################################### 
-#####################################################################################################################
-
-
+carto_cereales_par_canton <- voronoi_surfaces_final %>% 
+  mutate(part_cereales = round(100 * cereales/total_des_terres_labourables, -1)) %>% 
+  tm_shape(projection = st_crs(2154)) +
+  tm_polygons("part_cereales",
+              textNA="Valeur manquante",
+              style = "jenks",
+              palette = get_brewer_pal("OrRd", n = 5, contrast = c(0.2, 1)),
+              title = "Part des céréales\n en % de la \nsurface labourable") +
+  tm_layout(main.title = "Surfaces exploitées pour les céréales \n en France en 1852",
+            main.title.size = 1.2,
+            bg.color = "skyblue",
+            legend.position = c("left","bottom"),
+            legend.bg.color = "white",
+            legend.bg.alpha = .4,
+            legend.outside = F,
+            main.title.position = "center",
+            frame = FALSE)
+carto_cereales_par_canton
 ```
 
 ```{r}
@@ -574,14 +591,25 @@ Pour apprendre à faire des cartes en R, vous pouvez consulter le site :
 #| warning: false
 #| echo: true
 
-##################################################################################################################### 
-##################################################################################################################### 
-####################################### A COMPLETER    #####################################################
-##################################################################################################################### 
-#####################################################################################################################
+mf_theme("nevermind")
 
+v_ra1852_part <- voronoi_surfaces_final %>%
+  mutate(part_vignes = vignes / superficie_totale * 100)
 
-
+plot.new()
+mf_map(x=voronoi_surfaces_final)
+mf_map(
+  x =v_ra1852_part, 
+  var = "part_vignes", 
+  type = "choro",
+  pal = "Dark Mint",
+  breaks = "quantile",
+  nbreaks = 6,
+  leg_title = "la legende",
+  leg_val_rnd = 0,
+  add = TRUE
+  )
+mf_title("Vignes")
 ```
 
 ## 5 - Visualisation avancée des données
